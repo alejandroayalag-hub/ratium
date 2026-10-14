@@ -1,0 +1,5 @@
+node_modules/
+.env
+dist/
+# datos reales de clientes (XML SAT, catálogos) NUNCA en git
+muestras/
