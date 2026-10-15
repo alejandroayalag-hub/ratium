@@ -3,3 +3,6 @@ node_modules/
 dist/
 # datos reales de clientes (XML SAT, catálogos) NUNCA en git
 muestras/
+datos/
+reporte/
+__pycache__/

@@ -33,6 +33,8 @@ Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la res
 15. ¿Revisa proveedores contra la lista 69-B (EFOS)? ¿Qué hace si sale uno?
 16. Gastos no deducibles: ¿qué reglas revisa? (pago en efectivo > $2,000, uso CFDI S01, gastos sin relación con la actividad…)
 
+19. Un RFC puede aparecer varias veces en la lista 69-B (ej. "Definitivo" y "Sentencia Favorable" por oficios distintos; hay 82 casos en la lista actual). Hoy RATIUM marca la situación más grave. ¿Es correcto o la sentencia favorable lo limpia?
+
 ## Valor del producto (para vender a otros contadores)
 17. ¿Cuánto tiempo le toma hoy contabilizar un mes de un cliente típico?
 18. ¿Qué parte del proceso le quita más tiempo o le da más errores?
