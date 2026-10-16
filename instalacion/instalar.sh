@@ -3,6 +3,7 @@
 # Sirve para RATIUM y Lexium: Ollama + Open WebUI + Tailscale + firewall + respaldos.
 #
 # Uso:  sudo bash instalar.sh
+#       sudo NAS_IP=192.168.68.50 bash instalar.sh    (además monta el NAS QNAP del despacho; ver DIA-23.md)
 # Correrlo DOS veces: la primera instala el driver NVIDIA y pide reiniciar; la segunda instala el resto.
 # Es idempotente: si algo falla se corrige y se vuelve a correr.
 set -euo pipefail
@@ -13,6 +14,11 @@ DIR_RESPALDOS=/srv/respaldos
 OWUI_VERSION=0.11.4                 # la misma que Lexium: sus scripts de carga usan esta API
 OWUI_PUERTO=3000
 MODELOS=(qwen3:14b bge-m3)          # generador + embeddings (caben juntos en 16 GB de VRAM)
+NAS_IP="${NAS_IP:-}"                # vacío = sin NAS
+NAS_ESCRITOS=escritos               # carpeta compartida con los escritos del despacho (Lexium la lee)
+NAS_RESPALDOS=respaldos             # carpeta compartida donde se copia el respaldo diario
+NAS_USUARIO_RO=lexium-ro            # usuario del QNAP con permiso SOLO LECTURA en $NAS_ESCRITOS
+NAS_USUARIO_RESP=ia-respaldo        # usuario del QNAP con lectura/escritura SOLO en $NAS_RESPALDOS
 LLAVE_SSH='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmOE5ko1yKAIdqOHyETwWR0aAxzQ571g5fExh5uebRq alejandroayalag@gmail.com'           # llave pública de la máquina de desarrollo (acceso de soporte)
 
 paso() { printf '\n\033[1;35m▶ %s\033[0m\n' "$*"; }
@@ -22,20 +28,20 @@ falla() { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 . /etc/os-release
 [[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 ]] || falla "Probado solo en Ubuntu 24.04 (este es $PRETTY_NAME)"
 
-paso "1/9 Revisando la GPU"
+paso "1/10 Revisando la GPU"
 command -v lspci >/dev/null || apt-get install -y pciutils
 lspci | grep -qi nvidia || falla "No se ve ninguna GPU NVIDIA. La GPU por OCuLink NO se detecta en caliente:
   apaga la miniPC, enciende primero el dock de la GPU y después la miniPC."
 lspci | grep -i nvidia || true
 
-paso "2/9 Paquetes del sistema"
+paso "2/10 Paquetes del sistema"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y full-upgrade
 apt-get install -y curl git poppler-utils python3 ufw unattended-upgrades openssh-server ubuntu-drivers-common
 dpkg-reconfigure -f noninteractive unattended-upgrades   # parches de seguridad automáticos
 
-paso "3/9 Driver NVIDIA"
+paso "3/10 Driver NVIDIA"
 if ! nvidia-smi >/dev/null 2>&1; then
   ubuntu-drivers install
   printf '\n\033[1;33m⚠ Driver instalado. Reinicia (sudo reboot) y vuelve a correr: sudo bash %s\033[0m\n' "$0"
@@ -44,7 +50,7 @@ if ! nvidia-smi >/dev/null 2>&1; then
 fi
 nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 
-paso "4/9 Ollama"
+paso "4/10 Ollama"
 if ! command -v ollama >/dev/null; then
   curl -fsSL https://ollama.com/install.sh -o /tmp/ollama-install.sh
   sh /tmp/ollama-install.sh
@@ -64,7 +70,7 @@ systemctl restart ollama
 for i in $(seq 1 30); do ollama list >/dev/null 2>&1 && break; sleep 2; done
 for m in "${MODELOS[@]}"; do ollama pull "$m"; done
 
-paso "5/9 Usuario de servicio y Open WebUI $OWUI_VERSION"
+paso "5/10 Usuario de servicio y Open WebUI $OWUI_VERSION"
 id "$USUARIO_IA" >/dev/null 2>&1 || useradd --system --create-home --home-dir "$DIR_IA" --shell /usr/sbin/nologin "$USUARIO_IA"
 install -d -o "$USUARIO_IA" -g "$USUARIO_IA" -m 750 "$DIR_IA/webui-data" "$DIR_IA/datos"
 como_ia() { sudo -u "$USUARIO_IA" -H env PATH="$DIR_IA/.local/bin:/usr/bin:/bin" bash -c "$1"; }
@@ -105,11 +111,11 @@ systemctl daemon-reload
 systemctl enable --now ia-webui
 systemctl restart ia-webui
 
-paso "6/9 Tailscale (acceso remoto de soporte)"
+paso "6/10 Tailscale (acceso remoto de soporte)"
 command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
 systemctl enable --now tailscaled
 
-paso "7/9 SSH solo con llave"
+paso "7/10 SSH solo con llave"
 ADMIN="${SUDO_USER:-}"
 if [[ -n "$ADMIN" && "$LLAVE_SSH" == ssh-* ]]; then
   HOME_ADMIN=$(getent passwd "$ADMIN" | cut -d: -f6)
@@ -124,7 +130,7 @@ else
   echo "Sin SUDO_USER o sin llave: SSH queda como estaba"
 fi
 
-paso "8/9 Firewall: solo red local y Tailscale"
+paso "8/10 Firewall: solo red local y Tailscale"
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow in on tailscale0
@@ -134,14 +140,60 @@ for red in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
 done
 ufw --force enable
 
-paso "9/9 Respaldo diario"
+paso "9/10 NAS del despacho"
+if [[ -n "$NAS_IP" ]]; then
+  apt-get install -y cifs-utils
+  install -d -m 700 /etc/ia
+  pedir_cred() {  # $1 archivo, $2 usuario del QNAP; la contraseña se pide una vez y queda en un archivo 600
+    if [[ ! -s "$1" ]]; then
+      read -rsp "Contraseña del usuario $2 en el NAS: " clave; echo
+      printf 'username=%s\npassword=%s\n' "$2" "$clave" > "$1"; chmod 600 "$1"; unset clave
+    fi
+  }
+  pedir_cred /etc/ia/nas-escritos.cred "$NAS_USUARIO_RO"
+  pedir_cred /etc/ia/nas-respaldos.cred "$NAS_USUARIO_RESP"
+  install -d "/mnt/nas/$NAS_ESCRITOS" "/mnt/nas/$NAS_RESPALDOS"
+  UID_IA=$(id -u "$USUARIO_IA"); GID_IA=$(id -g "$USUARIO_IA")
+  # nofail + automount: si el NAS está apagado la miniPC arranca igual y monta cuando el NAS vuelve
+  OPC="vers=3.0,nofail,_netdev,x-systemd.automount,x-systemd.mount-timeout=15"
+  sed -i '\#/mnt/nas/#d' /etc/fstab
+  echo "//$NAS_IP/$NAS_ESCRITOS /mnt/nas/$NAS_ESCRITOS cifs ro,credentials=/etc/ia/nas-escritos.cred,uid=$UID_IA,gid=$GID_IA,file_mode=0440,dir_mode=0550,$OPC 0 0" >> /etc/fstab
+  echo "//$NAS_IP/$NAS_RESPALDOS /mnt/nas/$NAS_RESPALDOS cifs rw,credentials=/etc/ia/nas-respaldos.cred,uid=0,gid=0,file_mode=0600,dir_mode=0700,$OPC 0 0" >> /etc/fstab
+  systemctl daemon-reload
+  systemctl restart remote-fs.target
+  if ls "/mnt/nas/$NAS_ESCRITOS" >/dev/null 2>&1; then
+    echo "✓ escritos montado: $(find "/mnt/nas/$NAS_ESCRITOS" -type f | wc -l) archivos"
+    # ro en el montaje no basta: el usuario del QNAP tampoco debe poder escribir (defensa doble)
+    if mount -o remount,rw "/mnt/nas/$NAS_ESCRITOS" 2>/dev/null && touch "/mnt/nas/$NAS_ESCRITOS/.prueba-ia" 2>/dev/null; then
+      rm -f "/mnt/nas/$NAS_ESCRITOS/.prueba-ia"
+      echo "⚠ El usuario $NAS_USUARIO_RO PUEDE escribir en $NAS_ESCRITOS: en el QNAP déjalo en solo lectura"
+    fi
+    mount -o remount,ro "/mnt/nas/$NAS_ESCRITOS" 2>/dev/null || true
+  else
+    echo "✗ No se pudo montar //$NAS_IP/$NAS_ESCRITOS: revisa usuario, contraseña y permisos en el QNAP"
+  fi
+  if touch "/mnt/nas/$NAS_RESPALDOS/.prueba-ia" 2>/dev/null; then
+    rm -f "/mnt/nas/$NAS_RESPALDOS/.prueba-ia"; echo "✓ respaldos montado con escritura"
+  else
+    echo "✗ No se pudo escribir en //$NAS_IP/$NAS_RESPALDOS"
+  fi
+else
+  echo "Sin NAS_IP: se omite (los respaldos quedan solo en este disco)"
+fi
+
+paso "10/10 Respaldo diario"
 install -d -m 700 "$DIR_RESPALDOS"
 cat > /usr/local/sbin/ia-respaldo <<EOF
 #!/bin/sh
-# ponytail: respaldo en el mismo disco; cuando haya NAS o disco externo, copiar también ahí
 set -e
-tar czf "$DIR_RESPALDOS/ia-\$(date +%F).tar.gz" -C "$DIR_IA" webui-data datos
+archivo="ia-\$(date +%F).tar.gz"
+tar czf "$DIR_RESPALDOS/\$archivo" -C "$DIR_IA" webui-data datos
 find "$DIR_RESPALDOS" -name 'ia-*.tar.gz' -mtime +14 -delete
+# copia fuera de este disco: si el NAS está montado, ahí se guardan 30 días
+if mountpoint -q "/mnt/nas/$NAS_RESPALDOS"; then
+  cp "$DIR_RESPALDOS/\$archivo" "/mnt/nas/$NAS_RESPALDOS/"
+  find "/mnt/nas/$NAS_RESPALDOS" -name 'ia-*.tar.gz' -mtime +30 -delete
+fi
 EOF
 chmod 700 /usr/local/sbin/ia-respaldo
 echo "30 3 * * * root /usr/local/sbin/ia-respaldo" > /etc/cron.d/ia-respaldo
