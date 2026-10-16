@@ -3,14 +3,16 @@
 Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la respuesta.
 
 ## Material que necesitamos
-- [ ] Versión de CONTPAQi Contabilidad (Ayuda → Acerca de)
-- [ ] Catálogo de cuentas exportado (Excel o TXT) de un cliente real
-- [ ] ZIP del SAT de ese cliente, un mes, emitidas y recibidas (+ metadata si la baja)
+- [x] Versión de CONTPAQi Contabilidad → ✅ 19.2.0, licencia anual 4 usuarios, empresas ilimitadas, DPIVA + Contabilidad Electrónica (2026-10-16)
+- [x] Catálogo de cuentas → ✅ Super Pack La Charanda (SPC150925J13): 1,094 cuentas, 8 dígitos, catálogo estándar CONTPAQi ligado a agrupador SAT, sin subcuentas por proveedor/cliente
+- [x] ZIP del SAT → ✅ sep-2026, 2 ZIP + 2 metadata. ⚠️ Emitidas: ZIP trae 500 XML y metadata 679 → el portal corta en 500; faltan 178 emitidas (+19 recibidas). Hay que bajar por rangos de días
 - [ ] Las pólizas que capturó ese mes para ese cliente (la "respuesta correcta")
 - [ ] Si importa algún archivo a CONTPAQi hoy: un ejemplo
 
+- [x] Extra: estado de cuenta BBVA sep-2026 (PDF 38 págs, 565 movimientos: SPEI, terminal punto de venta, comisiones) → base para conciliación bancaria
+
 ## CONTPAQi y su forma de trabajar
-1. ¿Cómo contabiliza hoy los XML: captura manual, ADD (visor de XML de CONTPAQi) o importa un archivo?
+1. ¿Cómo contabiliza hoy los XML: captura manual, ADD (visor de XML de CONTPAQi) o importa un archivo? → captura de pantalla de **Contabilizar CFDI** (asiento + póliza diaria, concepto "VENTAS BANCARIAS"). Confirmar: ¿usa asientos contables predefinidos por tipo de CFDI?
 2. ¿Hace una póliza por factura o agrupa (por día, por proveedor, por mes)?
 3. ¿Qué tipos de póliza usa para cada caso (diario, ingresos, egresos)?
 4. ¿Qué texto pone en el concepto de la póliza? (ej. "Fact A-123 Proveedor X")
@@ -25,8 +27,10 @@ Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la res
 11. ¿Contabiliza la nómina a partir de los XML de nómina timbrados?
 
 ## Descarga del SAT
-12. ¿Descarga emitidas y recibidas en ZIP separados?
-13. ¿Descarga también la metadata (TXT/CSV con estatus de cancelación)?
+12. ¿Descarga emitidas y recibidas en ZIP separados? → ✅ sí, cada uno con su metadata TXT
+13. ¿Descarga también la metadata (TXT/CSV con estatus de cancelación)? → ✅ sí
+20. ¿Sabe que el portal SAT limita a 500 XML por descarga? En sep-2026 faltaron 178 emitidas. ¿Las baja en varias tandas?
+21. ¿Las facturas de mostrador / venta al público general se contabilizan una por una o en global?
 
 ## Reglas que aplica hoy
 14. ¿Qué hace con un CFDI cancelado que ya había contabilizado?
