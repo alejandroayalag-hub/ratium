@@ -1,12 +1,13 @@
 """CLI: python -m ratium revisar archivo.zip --rfc XAXX010101000 [--lista-69b ruta.csv] [--salida carpeta]
-         python -m ratium actualizar-69b [--destino ruta.csv]"""
+         python -m ratium actualizar-69b [--destino ruta.csv]
+         python -m ratium corpus [CLAVES...]"""
 import argparse
 import csv
 import collections
 import pathlib
 import urllib.request
 
-from . import validaciones, zip_sat
+from . import corpus, validaciones, zip_sat
 
 URL_69B = 'http://omawww.sat.gob.mx/cifras_sat/Documents/Listado_Completo_69-B.csv'
 LISTA_DEFAULT = pathlib.Path(__file__).resolve().parent.parent / 'datos' / 'lista_69b.csv'
@@ -64,6 +65,9 @@ def main():
     a = sub.add_parser('actualizar-69b', help='Descarga la lista 69-B vigente del SAT')
     a.add_argument('--destino', default=str(LISTA_DEFAULT))
     a.set_defaults(func=actualizar_69b)
+    c = sub.add_parser('corpus', help='Baja y parte leyes, reglamentos, RMF y criterios fiscales')
+    c.add_argument('claves', nargs='*', help='solo estas (ej. LISR RMF)')
+    c.set_defaults(func=lambda a: corpus.construir(a.claves))
     args = p.parse_args()
     args.func(args)
 
