@@ -42,3 +42,8 @@ Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la res
 ## Valor del producto (para vender a otros contadores)
 17. ¿Cuánto tiempo le toma hoy contabilizar un mes de un cliente típico?
 18. ¿Qué parte del proceso le quita más tiempo o le da más errores?
+
+## Conciliación bancaria (sep-2026 Super Pack)
+22. Hay ~$5.5 M en pagos con RFC sin factura/complemento (ej. AAMM690929989, FJC780315E91). ¿Faltan en la descarga o el proveedor no ha timbrado el complemento?
+23. Cobros en efectivo/terminal (~$5.3 M): ¿cómo los concilia, contra factura global o por día?
+24. ¿Qué bancos usan sus clientes además de BBVA?
