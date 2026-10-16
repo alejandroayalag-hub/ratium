@@ -1,6 +1,8 @@
 """Lectura del ZIP que baja el contador del portal del SAT (XML + metadata opcional) y de la lista 69-B."""
 import csv
 import io
+import os
+import pathlib
 import zipfile
 
 from . import cfdi
@@ -66,6 +68,24 @@ def leer_zip(ruta_o_archivo):
 
     with zipfile.ZipFile(ruta_o_archivo) as zf:
         procesar(zf)
+    return cfdis, metadata, errores
+
+
+def leer_varios(archivos):
+    """ZIP del SAT (emitidos, recibidos) y TXT de metadata sueltos → (cfdis, metadata, errores).
+    Cada archivo es una ruta o un par (nombre, archivo abierto) como llegan por la web."""
+    cfdis, metadata, errores = {}, {}, []
+    for a in archivos:
+        nombre, origen = (a, a) if isinstance(a, (str, os.PathLike)) else a
+        if str(nombre).lower().endswith(('.txt', '.csv')):
+            datos = pathlib.Path(origen).read_bytes() if origen is a else origen.read()
+            metadata.update(leer_metadata(_texto(datos)))
+            continue
+        c, m, e = leer_zip(origen)
+        for uuid, cfdi_ in c.items():
+            cfdis.setdefault(uuid, cfdi_)
+        metadata.update(m)
+        errores += e
     return cfdis, metadata, errores
 
 

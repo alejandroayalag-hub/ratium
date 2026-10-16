@@ -1,4 +1,5 @@
 """CLI: python -m ratium revisar emitidos.zip recibidos.zip [metadata.txt...] --rfc XAXX010101000 [--lista-69b ruta.csv] [--salida carpeta]
+         python -m ratium web [--host 0.0.0.0] [--puerto 3016]
          python -m ratium conciliar estado_cuenta.pdf emitidos.zip recibidos.zip [metadata.txt...] --rfc XAXX010101000 [--salida carpeta]
          python -m ratium actualizar-69b [--destino ruta.csv]
          python -m ratium corpus [CLAVES...]"""
@@ -9,7 +10,7 @@ from decimal import Decimal
 import pathlib
 import urllib.request
 
-from . import banco, conciliacion, corpus, validaciones, zip_sat
+from . import banco, conciliacion, corpus, servidor, validaciones, zip_sat
 
 URL_69B = 'http://omawww.sat.gob.mx/cifras_sat/Documents/Listado_Completo_69-B.csv'
 LISTA_DEFAULT = pathlib.Path(__file__).resolve().parent.parent / 'datos' / 'lista_69b.csv'
@@ -19,23 +20,8 @@ COLUMNAS_CFDI = ['uuid', 'tipo', 'fecha', 'serie', 'folio', 'emisor_rfc', 'emiso
                  'retenciones', 'total', 'version']
 
 
-def leer_archivos(rutas):
-    """Varios ZIP del SAT (emitidos, recibidos) y TXT de metadata sueltos → (cfdis, metadata, errores)."""
-    cfdis, metadata, errores = {}, {}, []
-    for ruta in rutas:
-        if ruta.lower().endswith(('.txt', '.csv')):
-            metadata.update(zip_sat.leer_metadata(zip_sat._texto(pathlib.Path(ruta).read_bytes())))
-            continue
-        c, m, e = zip_sat.leer_zip(ruta)
-        for uuid, cfdi in c.items():
-            cfdis.setdefault(uuid, cfdi)
-        metadata.update(m)
-        errores += e
-    return cfdis, metadata, errores
-
-
 def revisar(args):
-    cfdis, metadata, errores = leer_archivos(args.archivos)
+    cfdis, metadata, errores = zip_sat.leer_varios(args.archivos)
     lista = zip_sat.leer_69b(args.lista_69b) if pathlib.Path(args.lista_69b).exists() else {}
     if not lista:
         print('⚠️  Sin lista 69-B: corre "python -m ratium actualizar-69b" para revisar EFOS')
@@ -62,7 +48,7 @@ def revisar(args):
 
 def conciliar(args):
     movimientos, resumen = banco.leer_bbva(banco.texto_pdf(args.estado_cuenta))
-    cfdis, metadata, errores = leer_archivos(args.archivos)
+    cfdis, metadata, errores = zip_sat.leer_varios(args.archivos)
     vigentes = [c for u, c in cfdis.items() if metadata.get(u, {}).get('estatus') != '0']
     filas, pendientes = conciliacion.conciliar(movimientos, vigentes, args.rfc)
 
@@ -117,6 +103,10 @@ def main():
     k.add_argument('--rfc', required=True, help='RFC del cliente del contador')
     k.add_argument('--salida', default='reporte')
     k.set_defaults(func=conciliar)
+    w = sub.add_parser('web', help='Abre la app web (puerto 3016)')
+    w.add_argument('--host', default='127.0.0.1', help='0.0.0.0 para la red del despacho (requiere RATIUM_CLAVE)')
+    w.add_argument('--puerto', type=int, default=3016)
+    w.set_defaults(func=lambda a: servidor.servir(a.host, a.puerto))
     a = sub.add_parser('actualizar-69b', help='Descarga la lista 69-B vigente del SAT')
     a.add_argument('--destino', default=str(LISTA_DEFAULT))
     a.set_defaults(func=actualizar_69b)

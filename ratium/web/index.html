@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RATIUM</title>
+  <link rel="preload" href="fuentes/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fuentes/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231E5A46'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23F6F2E9' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></symbol>
+    <symbol id="i-zip" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 12h1M10 15h1M10 18h1M12 13.5h1M12 16.5h1"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="m2 10 10-7 10 7z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  </defs>
+</svg>
+
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header class="barra">
+  <div class="marca">
+    <span class="marca__nombre">Ratium</span>
+    <span class="marca__lema">rationes · las cuentas en orden</span>
+  </div>
+  <span class="sello" title="RATIUM corre en el equipo del despacho. Ningún XML ni estado de cuenta se envía a internet.">
+    <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg> Local · los datos no salen de la oficina
+  </span>
+</header>
+
+<main id="principal" tabindex="-1">
+
+  <!-- ───────────── Captura ───────────── -->
+  <section id="vista-captura" class="captura">
+    <div class="captura__texto">
+      <p class="sobretitulo">Revisión mensual</p>
+      <h1 class="display">Las cuentas,<br><em>en orden.</em></h1>
+      <p class="entrada">Sube lo que bajaste del SAT y el estado de cuenta. RATIUM lee cada XML, marca lo que no cuadra y cruza los pagos con el banco.</p>
+      <ol class="pasos">
+        <li><b>Validaciones</b><span>cancelados, 69-B, PPD sin complemento, efectivo, uso CFDI</span></li>
+        <li><b>Conciliación</b><span>cada movimiento del banco contra su CFDI</span></li>
+        <li><b>Reportes</b><span>en CSV, listos para Excel</span></li>
+      </ol>
+    </div>
+
+    <form id="formulario" class="folio" novalidate>
+      <div class="campo">
+        <label for="rfc">RFC del cliente</label>
+        <input id="rfc" name="rfc" class="cifra mayus" autocomplete="off" spellcheck="false" maxlength="13"
+               placeholder="SPC150925J13" aria-describedby="rfc-ayuda rfc-error" required>
+        <p id="rfc-ayuda" class="ayuda">12 caracteres persona moral, 13 persona física.</p>
+        <p id="rfc-error" class="error" role="alert" hidden></p>
+      </div>
+
+      <div class="campo">
+        <span class="etiqueta" id="archivos-etiqueta">Archivos del mes</span>
+        <label class="zona" id="zona" for="archivos">
+          <svg class="ico ico--grande" aria-hidden="true"><use href="#i-upload"/></svg>
+          <span class="zona__titulo">Arrastra aquí o <u>elige archivos</u></span>
+          <span class="zona__detalle">ZIP del SAT (emitidos y recibidos) · TXT de metadata · PDF del banco (BBVA)</span>
+          <input id="archivos" type="file" multiple accept=".zip,.txt,.csv,.pdf" aria-labelledby="archivos-etiqueta">
+        </label>
+        <ul id="lista-archivos" class="archivos" aria-live="polite"></ul>
+        <p id="archivos-error" class="error" role="alert" hidden></p>
+      </div>
+
+      <button id="enviar" class="boton boton--primario" type="submit">
+        <span class="boton__texto">Revisar</span>
+      </button>
+      <p id="estado-envio" class="ayuda centro" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <!-- ───────────── Resultados ───────────── -->
+  <section id="vista-resultados" class="resultados" hidden>
+    <div class="encabezado">
+      <div>
+        <p class="sobretitulo" id="r-periodo"></p>
+        <h1 class="titulo" id="r-cliente"></h1>
+      </div>
+      <button id="nueva" class="boton boton--fantasma" type="button">
+        <svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> Nueva revisión
+      </button>
+    </div>
+
+    <dl class="libro" id="r-cifras"></dl>
+    <div id="r-avisos"></div>
+
+    <div class="pestanas" role="tablist" aria-label="Secciones del reporte">
+      <button role="tab" id="t-alertas" aria-controls="p-alertas" aria-selected="true">Alertas <span class="cuenta" id="c-alertas"></span></button>
+      <button role="tab" id="t-conciliacion" aria-controls="p-conciliacion" aria-selected="false" tabindex="-1">Conciliación <span class="cuenta" id="c-conciliacion"></span></button>
+      <button role="tab" id="t-pendientes" aria-controls="p-pendientes" aria-selected="false" tabindex="-1">CFDI sin banco <span class="cuenta" id="c-pendientes"></span></button>
+      <button role="tab" id="t-cfdis" aria-controls="p-cfdis" aria-selected="false" tabindex="-1">CFDI <span class="cuenta" id="c-cfdis"></span></button>
+    </div>
+
+    <div role="tabpanel" id="p-alertas" aria-labelledby="t-alertas" class="panel"></div>
+    <div role="tabpanel" id="p-conciliacion" aria-labelledby="t-conciliacion" class="panel" hidden></div>
+    <div role="tabpanel" id="p-pendientes" aria-labelledby="t-pendientes" class="panel" hidden></div>
+    <div role="tabpanel" id="p-cfdis" aria-labelledby="t-cfdis" class="panel" hidden></div>
+  </section>
+</main>
+
+<footer class="pie">RATIUM · HAVOC · uso interno del despacho</footer>
+<script src="app.js"></script>
+</body>
+</html>
