@@ -4,6 +4,8 @@
 #
 # Uso:  sudo bash instalar.sh
 #       sudo NAS_IP=192.168.68.50 bash instalar.sh    (además monta el NAS QNAP del despacho; ver DIA-23.md)
+#       sudo SIN_GPU=1 bash instalar.sh               (instala todo menos el driver, con la GPU aún sin conectar;
+#                                                      al conectarla se vuelve a correr sin SIN_GPU)
 # Correrlo DOS veces: la primera instala el driver NVIDIA y pide reiniciar; la segunda instala el resto.
 # Es idempotente: si algo falla se corrige y se vuelve a correr.
 set -euo pipefail
@@ -15,6 +17,7 @@ OWUI_VERSION=0.11.4                 # la misma que Lexium: sus scripts de carga 
 OWUI_PUERTO=3000
 MODELOS=(qwen3:14b bge-m3)          # generador + embeddings (caben juntos en 16 GB de VRAM)
 NAS_IP="${NAS_IP:-}"                # vacío = sin NAS
+SIN_GPU="${SIN_GPU:-}"              # 1 = se salta GPU y driver (Ollama corre en CPU mientras)
 NAS_ESCRITOS=escritos               # carpeta compartida con los escritos del despacho (Lexium la lee)
 NAS_RESPALDOS=respaldos             # carpeta compartida donde se copia el respaldo diario
 NAS_USUARIO_RO=lexium-ro            # usuario del QNAP con permiso SOLO LECTURA en $NAS_ESCRITOS
@@ -26,13 +29,18 @@ falla() { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 [[ $EUID -eq 0 ]] || falla "Córrelo con sudo: sudo bash $0"
 . /etc/os-release
-[[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 ]] || falla "Probado solo en Ubuntu 24.04 (este es $PRETTY_NAME)"
+[[ "$ID" == ubuntu && "$VERSION_ID" =~ ^(24|26)\.04$ ]] || falla "Probado solo en Ubuntu 24.04 y 26.04 (este es $PRETTY_NAME)"
 
 paso "1/10 Revisando la GPU"
 command -v lspci >/dev/null || apt-get install -y pciutils
-lspci | grep -qi nvidia || falla "No se ve ninguna GPU NVIDIA. La GPU por OCuLink NO se detecta en caliente:
-  apaga la miniPC, enciende primero el dock de la GPU y después la miniPC."
-lspci | grep -i nvidia || true
+if [[ -n "$SIN_GPU" ]]; then
+  echo "SIN_GPU=1: se omiten GPU y driver"
+else
+  lspci | grep -qi nvidia || falla "No se ve ninguna GPU NVIDIA. La GPU por OCuLink NO se detecta en caliente:
+  apaga la miniPC, enciende primero el dock de la GPU y después la miniPC.
+  (Para instalar el resto sin GPU: sudo SIN_GPU=1 bash $0)"
+  lspci | grep -i nvidia || true
+fi
 
 paso "2/10 Paquetes del sistema"
 export DEBIAN_FRONTEND=noninteractive
@@ -42,13 +50,16 @@ apt-get install -y curl git poppler-utils python3 ufw unattended-upgrades openss
 dpkg-reconfigure -f noninteractive unattended-upgrades   # parches de seguridad automáticos
 
 paso "3/10 Driver NVIDIA"
-if ! nvidia-smi >/dev/null 2>&1; then
+if [[ -n "$SIN_GPU" ]]; then
+  echo "SIN_GPU=1: driver pendiente"
+elif ! nvidia-smi >/dev/null 2>&1; then
   ubuntu-drivers install
   printf '\n\033[1;33m⚠ Driver instalado. Reinicia (sudo reboot) y vuelve a correr: sudo bash %s\033[0m\n' "$0"
   printf '  Si al reiniciar aparece la pantalla azul "Perform MOK management": Enroll MOK → Continue → la contraseña que te pidió.\n'
   exit 0
+else
+  nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 fi
-nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 
 paso "4/10 Ollama"
 if ! command -v ollama >/dev/null; then
