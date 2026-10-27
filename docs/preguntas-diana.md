@@ -1,5 +1,13 @@
 # Preguntas para Diana (piloto RATIUM)
 
+## Flujo real de Diana (reunión 2026-10-27)
+1. Abre CONTPAQi Contabilidad → **ADD** descarga del SAT los XML + metadata (sin portal ni ZIP).
+2. **Contabilizador** (Contabilizar CFDI) genera las pólizas automáticamente en CONTPAQi.
+3. **Cotejo con el estado de cuenta bancario**: revisar cuáles CFDI sí aparecen en el banco → con **F9** se hace la póliza (de pago/cobro).
+4. **Lo que más tiempo le toma: la conciliación bancaria (paso 3).**
+
+Consecuencia: CONTPAQi ya resuelve la descarga y las pólizas de provisión. El valor de RATIUM está en la conciliación banco ↔ CFDI.
+
 Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la respuesta.
 
 ## Material que necesitamos
