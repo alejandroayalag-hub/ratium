@@ -4,6 +4,7 @@ Determinista, sin IA. Orden de reglas (de más a menos segura):
   1. 'rfc'     el banco trae el RFC (pagos BNET "RFC:XXX") y uno o varios CFDI de ese RFC suman el importe exacto
   2. 'nombre'  el beneficiario/ordenante del SPEI coincide con el nombre del CFDI y suman el importe exacto
   1b.'rfc ±$1' mismo RFC, un solo CFDI con diferencia de centavos → revisar
+  2b.'nombre ±$1' mismo nombre, un solo CFDI con diferencia de centavos a ±5 días → revisar
   1c.'rfc (varias transferencias)' un complemento de pago que suma varias transferencias del mismo RFC
   3. 'monto'   un solo CFDI pendiente con ese importe exacto a ±5 días → hay que revisarlo
 Lo que no concilia se etiqueta por código de movimiento (comisiones, ventas TPV, efectivo…).
@@ -108,6 +109,9 @@ def conciliar(movimientos, cfdis, rfc):
             nombre = _palabras(m['descripcion']) - propias
             parecidos = [e for e in mios if e['palabras'] and len(nombre & e['palabras']) >= min(2, len(e['palabras']))]
             encontrados, regla = (_combinacion(parecidos, importe, m['fecha']) if parecidos else None), 'nombre'
+            if not encontrados:  # pago referenciado (CIE) sin RFC: el complemento redondea distinto (ABARROTERA DEL DUERO)
+                cerca = [e for e in parecidos if abs(e['importe'] - importe) <= TOLERANCIA and _dias(e['fecha'], m['fecha']) <= DIAS_MONTO]
+                encontrados, regla = (cerca if len(cerca) == 1 else None), f'nombre ±${TOLERANCIA}'
         if not encontrados:
             mismos = [e for e in mios if e['importe'] == importe and _dias(e['fecha'], m['fecha']) <= DIAS_MONTO]
             encontrados, regla = (mismos if len(mismos) == 1 else None), 'monto'

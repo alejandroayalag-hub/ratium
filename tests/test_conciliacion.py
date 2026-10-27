@@ -86,6 +86,13 @@ class TestConciliar(unittest.TestCase):
         self.assertEqual((filas[0]['regla'], filas[0]['uuids']), ('nombre', 'A'))
         self.assertEqual([e['cfdi']['uuid'] for e in pend], ['B'])  # el de efectivo (E) no se espera en el banco
 
+    def test_nombre_con_diferencia_de_centavos(self):
+        cfdis = [cfdi('P1', 'ADU800131T10', CLIENTE, tipo='pago', nombre='ABARROTERA DEL DUERO', pagos=[pago('2026-09-18', '124439.00')])]
+        movs = [self.m('2026-09-17', 'ABARROTERA DEL DUERO | CIE:1475797', cargo='124440.00', codigo='P14')]
+        filas, pend = conciliacion.conciliar(movs, cfdis, CLIENTE)
+        self.assertEqual((filas[0]['estado'], filas[0]['regla'], filas[0]['uuids']), ('revisar', 'nombre ±$1.00', 'P1'))
+        self.assertEqual(pend, [])
+
     def test_sin_cfdi_se_categoriza_por_codigo(self):
         filas, _ = conciliacion.conciliar([self.m('2026-09-01', 'APLI TASA DE DES CREDITO', cargo='264.36', codigo='V46')], [], CLIENTE)
         self.assertEqual((filas[0]['estado'], filas[0]['regla']), ('sin_cfdi', 'Comisión terminal'))
