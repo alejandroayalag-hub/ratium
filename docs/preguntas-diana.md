@@ -6,6 +6,13 @@
 3. **Cotejo con el estado de cuenta bancario**: revisar cuáles CFDI sí aparecen en el banco → con **F9** se hace la póliza (de pago/cobro).
 4. **Lo que más tiempo le toma: la conciliación bancaria (paso 3).**
 
+5. Respuestas (2026-10-27):
+   - Cotejo: va cotejando conforme encuentra los movimientos/facturas (en los dos sentidos).
+   - F9: selecciona el movimiento si está dentro del estado de cuenta. **Foto de la pantalla F9: mañana 2026-10-28.**
+   - Lo que atora: montos que no cuadran por centavos y facturas que no aparecen.
+   - **Prioridad: lo que salió del banco y no tiene factura.**
+   - El cliente manda el estado de cuenta en PDF hacia el **día 5**; conciliar Super Pack le toma **5 días**.
+
 Consecuencia: CONTPAQi ya resuelve la descarga y las pólizas de provisión. El valor de RATIUM está en la conciliación banco ↔ CFDI.
 
 Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la respuesta.

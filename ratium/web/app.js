@@ -183,10 +183,12 @@ function mostrarResultados(d) {
   $('#c-alertas').textContent = entero.format(d.alertas.length);
   $('#c-cfdis').textContent = entero.format(d.cfdis.length);
   $('#c-conciliacion').textContent = banco ? entero.format(banco.filas.length) : '—';
+  $('#c-sinfactura').textContent = banco ? entero.format(banco.sin_factura.length) : '—';
   $('#c-pendientes').textContent = banco ? entero.format(banco.pendientes.length) : '—';
 
   panelAlertas(d);
   panelConciliacion(d);
+  panelSinFactura(d);
   panelPendientes(d);
   panelCfdis(d);
   elegirPestana($('#t-alertas'), false);
@@ -314,6 +316,26 @@ function balanza(titulo, filas, lado) {
     h('dl', { class: 'leyenda' }, por.map(([k, n, c]) => h('div', {},
       h('dt', {}, h('i', { class: `seg-${k}` }), ESTADOS[k][0]),
       h('dd', {}, `$${dineroC(c)}`, h('small', {}, ` · ${n}`))))));
+}
+
+function panelSinFactura(d) {
+  const panel = $('#p-sinfactura');
+  panel.replaceChildren();
+  if (!d.bancos.length) return panel.append(h('div', { class: 'hoja sin-datos' }, ico('i-bank', 'ico'), h('p', {}, 'Requiere estado de cuenta.')));
+  panel.append(h('p', { class: 'ayuda', style: 'margin:0 0 14px' }, 'Dinero que salió del banco y no tiene factura, agrupado por proveedor. Comisiones, IMSS y SAT no aparecen: llevan su propio comprobante.'));
+  const grupo = (g) => (g.accion.startsWith('Hay ') && g.accion.includes('sin cruzar') ? 'cruzar' : g.accion.startsWith('Ningún') ? 'pedir' : 'complemento');
+  tablaFiltrable(panel, {
+    filas: d.bancos[0].sin_factura, grupo, grupos: [['cruzar', 'Revisar CFDI sin cruzar'], ['complemento', 'Pedir complemento'], ['pedir', 'Pedir factura']],
+    texto: (g) => [g.rfc, g.nombre, g.accion].join(' '), csv: `pagos_sin_factura_${d.rfc}.csv`, totales: true,
+    vacio: 'Todo lo que salió del banco tiene factura.',
+    csvColumnas: [['rfc', 'RFC'], ['nombre', 'Proveedor'], ['pagos', 'Pagos'], ['total', 'Total'], ['fechas', 'Fechas'], ['accion', 'Qué hacer']],
+    columnas: [
+      { t: 'Proveedor', v: (g) => contraparte(g.nombre, g.rfc) },
+      { t: 'Pagos', v: (g) => h('span', {}, entero.format(g.pagos), h('span', { class: 'sub' }, g.fechas.split(', ').map(fecha).join(', '))) },
+      { t: 'Qué hacer', v: (g) => g.accion },
+      { t: 'Total', v: (g) => dinero(g.total), num: true, suma: (g) => g.total },
+    ],
+  });
 }
 
 function panelPendientes(d) {

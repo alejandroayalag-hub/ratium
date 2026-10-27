@@ -93,6 +93,21 @@ class TestConciliar(unittest.TestCase):
         self.assertEqual((filas[0]['estado'], filas[0]['regla'], filas[0]['uuids']), ('revisar', 'nombre ±$1.00', 'P1'))
         self.assertEqual(pend, [])
 
+    def test_pagos_sin_factura_por_proveedor(self):
+        cfdis = [cfdi('P1', 'BBB020202BBB', CLIENTE, tipo='pago', nombre='JABON LA CORONA', pagos=[pago('2026-08-30', '50.00')]),
+                 cfdi('F1', 'CCC030303CCC', CLIENTE, total='10', nombre='PAPELERIA CISNE', metodo='PPD')]
+        movs = [self.m('2026-09-05', 'PAGO | RFC:BBB020202BBB IVA:.05', cargo='700'), self.m('2026-09-06', 'PAGO | RFC:BBB020202BBB', cargo='300'),
+                self.m('2026-09-07', 'SPEI ENVIADO BAJIO | 0300926 Ref. 1 | 0003 | PAPELERIA CISNE SA', cargo='99', codigo='T17'),
+                self.m('2026-09-08', 'SPEI ENVIADO NUBANK | 0210926PAGO SERVICIOS Ref. 2', cargo='70', codigo='T17'),
+                self.m('2026-09-09', 'SAT | REF:04266 CIE:0844985', cargo='12', codigo='P14')]
+        filas, pend = conciliacion.conciliar(movs, cfdis, CLIENTE)
+        self.assertEqual(filas[-1]['regla'], 'Pago de impuestos SAT')
+        g = conciliacion.pagos_sin_factura(filas, pend, cfdis, CLIENTE)
+        self.assertEqual([(x['nombre'], x['pagos'], x['total']) for x in g],
+                         [('JABON LA CORONA', 2, D('1000')), ('PAPELERIA CISNE SA', 1, D('99')), ('SPEI ENVIADO NUBANK', 1, D('70'))])
+        self.assertEqual([x['accion'].split(':')[0] for x in g],
+                         ['Hay 1 CFDI suyo(s) sin cruzar por $50.00', 'Hay facturas suyas en el mes pero ninguna cuadra', 'Ningún CFDI suyo en el mes'])
+
     def test_sin_cfdi_se_categoriza_por_codigo(self):
         filas, _ = conciliacion.conciliar([self.m('2026-09-01', 'APLI TASA DE DES CREDITO', cargo='264.36', codigo='V46')], [], CLIENTE)
         self.assertEqual((filas[0]['estado'], filas[0]['regla']), ('sin_cfdi', 'Comisión terminal'))

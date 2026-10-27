@@ -47,7 +47,8 @@ def procesar(rfc, archivos):
             tmp.flush()
             movimientos, resumen = banco.leer_bbva(banco.texto_pdf(tmp.name))
         filas, pendientes = conciliacion.conciliar(movimientos, vigentes, rfc)
-        salida['bancos'].append({'archivo': nombre, 'resumen': resumen, 'filas': filas, 'pendientes': [
+        salida['bancos'].append({'archivo': nombre, 'resumen': resumen, 'filas': filas,
+                                 'sin_factura': conciliacion.pagos_sin_factura(filas, pendientes, vigentes, rfc), 'pendientes': [
             {'lado': e['lado'], 'fecha': e['fecha'][:10], 'importe': e['importe'], 'rfc': e['rfc'], 'tipo': e['cfdi']['tipo'],
              'uuid': e['cfdi']['uuid'], 'nombre': e['cfdi']['emisor_nombre' if e['lado'] == 'cargo' else 'receptor_nombre']}
             for e in sorted(pendientes, key=lambda e: (e['lado'], e['fecha']))]})

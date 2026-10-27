@@ -122,6 +122,8 @@ def conciliar(movimientos, cfdis, rfc):
             estado = 'conciliado' if regla in ('rfc', 'nombre') else 'revisar'
         else:
             estado, regla = 'sin_cfdi', CATEGORIAS.get(m['codigo'], '')
+            if m['descripcion'].startswith('SAT |'):  # pago referenciado de impuestos: el comprobante es la línea de captura
+                regla = 'Pago de impuestos SAT'
         filas.append(_fila(m, estado, regla, encontrados or []))
 
     # 2a pasada: un solo CFDI de pago que cubre varias transferencias del mismo RFC
@@ -150,3 +152,41 @@ def _fila(m, estado, regla, encontrados, diferencia=None):
             'diferencia': diferencia if diferencia is not None else (importe - sum(e['importe'] for e in encontrados) if encontrados else ''),
             'uuids': ' '.join(e['cfdi']['uuid'] for e in encontrados),
             'contraparte': ', '.join(sorted({f"{e['rfc']} {e['cfdi'][nombre]}" for e in encontrados}))}
+
+
+def _parecido(nombre, palabras):
+    return palabras and len(nombre & palabras) >= min(2, len(palabras))
+
+
+def pagos_sin_factura(filas, pendientes, cfdis, rfc):
+    """Cargos sin CFDI (salió dinero y no hay factura), agrupados por proveedor con qué hacer.
+    Lo ya categorizado (comisiones, IMSS) no entra: el banco o el instituto dan su comprobante aparte."""
+    recibidos = [c for c in cfdis if c['receptor_rfc'] == rfc]
+    nombres = {c['emisor_rfc']: c['emisor_nombre'] for c in recibidos}
+    grupos = {}
+    for f in filas:
+        if f['estado'] != 'sin_cfdi' or not f['cargo'] or f['regla']:
+            continue
+        partes = [p.strip() for p in f['descripcion'].split(' | ')]
+        r = RE_RFC.search(f['descripcion'])
+        # BNET trae RFC; SPEI enviado trae beneficiario al final; pago referenciado (CIE) trae el nombre al inicio
+        prov_rfc = r.group(1) if r else ''
+        nombre = nombres.get(prov_rfc, '') if r else (partes[-1] if f['codigo'] == 'T17' and len(partes) > 2 else partes[0])
+        g = grupos.setdefault(prov_rfc or nombre, {'rfc': prov_rfc, 'nombre': nombre, 'pagos': 0, 'total': Decimal('0'), 'fechas': []})
+        g['pagos'] += 1
+        g['total'] += f['cargo']
+        g['fechas'].append(f['fecha'][:10])
+
+    for g in grupos.values():
+        palabras = _palabras(g['nombre'])
+        mismo = lambda x_rfc, x_palabras: (g['rfc'] and x_rfc == g['rfc']) or (not g['rfc'] and _parecido(palabras, x_palabras))
+        sueltos = [e for e in pendientes if e['lado'] == 'cargo' and mismo(e['rfc'], e['palabras'])]
+        del_prov = [c for c in recibidos if mismo(c['emisor_rfc'], _palabras(c['emisor_nombre']))]
+        if sueltos:
+            g['accion'] = f"Hay {len(sueltos)} CFDI suyo(s) sin cruzar por ${sum(e['importe'] for e in sueltos):,}: revisar si son estos pagos"
+        elif del_prov:
+            g['accion'] = 'Hay facturas suyas en el mes pero ninguna cuadra: pedir complemento de pago o factura de este pago'
+        else:
+            g['accion'] = 'Ningún CFDI suyo en el mes: pedir factura'
+        g['fechas'] = ', '.join(sorted(set(g['fechas'])))
+    return sorted(grupos.values(), key=lambda g: -g['total'])

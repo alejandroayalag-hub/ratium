@@ -66,6 +66,12 @@ def conciliar(args):
             w.writerow({'lado': e['lado'], 'fecha': e['fecha'][:10], 'importe': e['importe'], 'rfc': e['rfc'], 'tipo': c['tipo'], 'uuid': c['uuid'],
                         'nombre': c['emisor_nombre'] if e['lado'] == 'cargo' else c['receptor_nombre']})
 
+    sin_factura = conciliacion.pagos_sin_factura(filas, pendientes, vigentes, args.rfc)
+    with open(salida / 'pagos_sin_factura.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        w = csv.DictWriter(f, ['rfc', 'nombre', 'pagos', 'total', 'fechas', 'accion'])
+        w.writeheader()
+        w.writerows(sin_factura)
+
     print(f"{len(movimientos)} movimientos (cuadran con el banco: {resumen['n_cargos']} cargos ${resumen['total_cargos']:,}, "
           f"{resumen['n_abonos']} abonos ${resumen['total_abonos']:,}); {len(vigentes)} CFDI vigentes, {len(errores)} archivos con error")
     for lado in ('cargo', 'abono'):
@@ -75,7 +81,8 @@ def conciliar(args):
             grupo = [f for f in mias if f['estado'] == estado]
             print(f"    {estado:<11}{len(grupo):>4}  ${sum((f[lado] for f in grupo), Decimal('0')):>16,}")
     print(f'  CFDI que deberían estar en el banco y no aparecen: {len(pendientes)}')
-    print(f'Reportes en {salida}/conciliacion.csv y {salida}/cfdi_sin_banco.csv')
+    print(f"  Pagos sin factura: {len(sin_factura)} proveedores, ${sum((g['total'] for g in sin_factura), Decimal('0')):,}")
+    print(f'Reportes en {salida}/: conciliacion.csv, cfdi_sin_banco.csv, pagos_sin_factura.csv')
 
 
 def actualizar_69b(args):
