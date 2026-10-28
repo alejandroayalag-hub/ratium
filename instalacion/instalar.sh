@@ -36,7 +36,7 @@ command -v lspci >/dev/null || apt-get install -y pciutils
 if [[ -n "$SIN_GPU" ]]; then
   echo "SIN_GPU=1: se omiten GPU y driver"
 else
-  lspci | grep -qi nvidia || falla "No se ve ninguna GPU NVIDIA. La GPU por OCuLink NO se detecta en caliente:
+  lspci | grep -i nvidia >/dev/null || falla "No se ve ninguna GPU NVIDIA. La GPU por OCuLink NO se detecta en caliente:
   apaga la miniPC, enciende primero el dock de la GPU y después la miniPC.
   (Para instalar el resto sin GPU: sudo SIN_GPU=1 bash $0)"
   lspci | grep -i nvidia || true
@@ -136,7 +136,8 @@ if [[ -n "$ADMIN" && "$LLAVE_SSH" == ssh-* ]]; then
   chown "$ADMIN:$ADMIN" "$HOME_ADMIN/.ssh/authorized_keys"; chmod 600 "$HOME_ADMIN/.ssh/authorized_keys"
   # la consola física sigue entrando con contraseña; por red, solo llave
   printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\n' > /etc/ssh/sshd_config.d/10-ia.conf
-  sshd -t && systemctl reload ssh
+  # en 24.04+ ssh arranca por socket: si ssh.service no está activo, la próxima conexión ya lee esta config
+  sshd -t && systemctl try-reload-or-restart ssh
 else
   echo "Sin SUDO_USER o sin llave: SSH queda como estaba"
 fi
