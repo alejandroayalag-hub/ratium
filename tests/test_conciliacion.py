@@ -108,7 +108,9 @@ class TestConciliar(unittest.TestCase):
         self.assertEqual([(x['nombre'], x['pagos'], x['total']) for x in g],
                          [('JABON LA CORONA', 2, D('1000')), ('PAPELERIA CISNE SA', 1, D('99')), ('SPEI ENVIADO NUBANK', 1, D('70'))])
         self.assertEqual([x['accion'].split(':')[0] for x in g],
-                         ['Hay 1 CFDI suyo(s) sin cruzar por $50.00', 'Hay facturas suyas en el mes pero ninguna cuadra', 'Ningún CFDI suyo en el mes'])
+                         ['Hay 1 CFDI suyo sin cruzar por $50.00', 'Hay facturas suyas en el mes pero ninguna cuadra', 'Ningún CFDI suyo en el mes'])
+        self.assertEqual([len(x['cfdis']) for x in g], [1, 0, 0])
+        self.assertEqual(g[0]['cfdis'][0]['importe'], D('50'))
 
     def test_sin_cfdi_se_categoriza_por_codigo(self):
         filas, _ = conciliacion.conciliar([self.m('2026-09-01', 'APLI TASA DE DES CREDITO', cargo='264.36', codigo='V46')], [], CLIENTE)

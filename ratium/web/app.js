@@ -325,14 +325,15 @@ function panelSinFactura(d) {
   panel.append(h('p', { class: 'ayuda', style: 'margin:0 0 14px' }, 'Dinero que salió del banco y no tiene factura, agrupado por proveedor. Comisiones, IMSS y SAT no aparecen: llevan su propio comprobante.'));
   const grupo = (g) => (g.accion.startsWith('Hay ') && g.accion.includes('sin cruzar') ? 'cruzar' : g.accion.startsWith('Ningún') ? 'pedir' : 'complemento');
   tablaFiltrable(panel, {
-    filas: d.bancos[0].sin_factura, grupo, grupos: [['cruzar', 'Revisar CFDI sin cruzar'], ['complemento', 'Pedir complemento'], ['pedir', 'Pedir factura']],
+    filas: d.bancos[0].sin_factura.map((g) => ({ ...g, cfdis_csv: (g.cfdis || []).map((c) => `${c.fecha} ${c.folio} ${c.importe} ${c.uuid}`).join('; ') })), grupo, grupos: [['cruzar', 'Revisar CFDI sin cruzar'], ['complemento', 'Pedir complemento'], ['pedir', 'Pedir factura']],
     texto: (g) => [g.rfc, g.nombre, g.accion].join(' '), csv: `pagos_sin_factura_${d.rfc}.csv`, totales: true,
     vacio: 'Todo lo que salió del banco tiene factura.',
-    csvColumnas: [['rfc', 'RFC'], ['nombre', 'Proveedor'], ['pagos', 'Pagos'], ['total', 'Total'], ['fechas', 'Fechas'], ['accion', 'Qué hacer']],
+    csvColumnas: [['rfc', 'RFC'], ['nombre', 'Proveedor'], ['pagos', 'Pagos'], ['total', 'Total'], ['fechas', 'Fechas'], ['accion', 'Qué hacer'], ['cfdis_csv', 'CFDI sin cruzar']],
     columnas: [
       { t: 'Proveedor', v: (g) => contraparte(g.nombre, g.rfc) },
       { t: 'Pagos', v: (g) => h('span', {}, entero.format(g.pagos), h('span', { class: 'sub' }, g.fechas.split(', ').map(fecha).join(', '))) },
-      { t: 'Qué hacer', v: (g) => g.accion },
+      { t: 'Qué hacer', v: (g) => h('span', {}, g.accion, (g.cfdis || []).map((c) =>
+        h('span', { class: 'sub', title: c.uuid }, `${fecha(c.fecha)} · ${c.folio || c.uuid.slice(0, 8)} · $${pesos.format(parseFloat(c.importe))}`))) },
       { t: 'Total', v: (g) => dinero(g.total), num: true, suma: (g) => g.total },
     ],
   });

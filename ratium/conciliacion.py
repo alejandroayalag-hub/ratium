@@ -183,8 +183,11 @@ def pagos_sin_factura(filas, pendientes, cfdis, rfc):
         mismo = lambda x_rfc, x_palabras: (g['rfc'] and x_rfc == g['rfc']) or (not g['rfc'] and _parecido(palabras, x_palabras))
         sueltos = [e for e in pendientes if e['lado'] == 'cargo' and mismo(e['rfc'], e['palabras'])]
         del_prov = [c for c in recibidos if mismo(c['emisor_rfc'], _palabras(c['emisor_nombre']))]
+        g['cfdis'] = [{'fecha': e['fecha'][:10], 'folio': f"{e['cfdi'].get('serie') or ''}{e['cfdi'].get('folio') or ''}",
+                       'importe': e['importe'], 'uuid': e['cfdi']['uuid']} for e in sorted(sueltos, key=lambda e: e['fecha'])]
         if sueltos:
-            g['accion'] = f"Hay {len(sueltos)} CFDI suyo(s) sin cruzar por ${sum(e['importe'] for e in sueltos):,}: revisar si son estos pagos"
+            g['accion'] = (f"Hay {len(sueltos)} CFDI {'suyo' if len(sueltos) == 1 else 'suyos'} sin cruzar por "
+                           f"${sum(e['importe'] for e in sueltos):,}: revisar si son estos pagos")
         elif del_prov:
             g['accion'] = 'Hay facturas suyas en el mes pero ninguna cuadra: pedir complemento de pago o factura de este pago; si no llega, va a no deducibles'
         else:
