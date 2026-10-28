@@ -247,7 +247,7 @@ function tablaFiltrable(panel, cfg) {
     }))) : null;
     cuerpo.replaceChildren(h('div', { class: 'hoja' }, h('table', {}, thead, tbody, tfoot)),
       filas.length > limite ? h('button', { type: 'button', class: 'boton boton--fantasma boton--chico mas', onclick: () => { limite += PAGINA * 5; pintar(); } },
-        `Mostrar ${entero.format(Math.min(filas.length - limite, PAGINA * 5))} más de ${entero.format(filas.length - limite)}`) : null);
+        `Mostrar ${entero.format(Math.min(filas.length - limite, PAGINA * 5))} más de ${entero.format(filas.length - limite)}`) : '');
   }
   pintar();
 }
