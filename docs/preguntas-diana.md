@@ -67,3 +67,8 @@ Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la res
 22. Hay ~$5.5 M en pagos con RFC sin factura/complemento (ej. AAMM690929989, FJC780315E91). ¿Faltan en la descarga o el proveedor no ha timbrado el complemento?
 23. Cobros en efectivo/terminal (~$5.3 M): ¿cómo los concilia, contra factura global o por día?
 24. ¿Qué bancos usan sus clientes además de BBVA?
+
+## Pagos sin factura (2026-10-28)
+25. Las facturas sin cruzar son de fines de agosto pagadas en septiembre y los montos no cuadran exacto con los pagos. ¿Son pagos parciales o anticipos? ¿Cómo los cruza usted?
+26. Miguel Ángel Ávalos (AAMM690929989) usa el mismo folio RF000038 en 4 facturas distintas. ¿Lo tenía visto?
+27. "SPEI ENVIADO NUBANK" ($70,000, 21-sep) y "TRANSF SPEI STP" ($18,999, 21-sep): ¿traspasos a cuentas propias o pagos a personas?
