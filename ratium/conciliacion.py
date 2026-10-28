@@ -32,6 +32,8 @@ CATEGORIAS = {
     'AA7': 'Depósito en efectivo (practicaja)', 'C02': 'Depósito en efectivo',
     'X01': 'Pago IMSS/Infonavit', 'Y45': 'Compensación del banco', 'T22': 'SPEI devuelto',
 }
+# sin código propio: se reconocen por el texto del movimiento
+CATEGORIAS_TEXTO = {'SAT |': 'Pago de impuestos SAT', 'PAN AMERICANO': 'Efectivo recolectado (Panamericano)'}
 STOP = {'PAGO', 'CUENTA', 'TERCERO', 'SPEI', 'ENVIADO', 'RECIBIDO', 'REF', 'RFC', 'IVA', 'BNET', 'TRANSF', 'FACTURA', 'SA', 'DE', 'CV', 'S', 'A', 'C', 'V', 'RL', 'SAB', 'SAPI', 'SC', 'LA', 'EL', 'LOS', 'LAS', 'Y', 'DEL'}
 
 
@@ -122,8 +124,7 @@ def conciliar(movimientos, cfdis, rfc):
             estado = 'conciliado' if regla in ('rfc', 'nombre') else 'revisar'
         else:
             estado, regla = 'sin_cfdi', CATEGORIAS.get(m['codigo'], '')
-            if m['descripcion'].startswith('SAT |'):  # pago referenciado de impuestos: el comprobante es la línea de captura
-                regla = 'Pago de impuestos SAT'
+            regla = next((c for t, c in CATEGORIAS_TEXTO.items() if t in m['descripcion']), regla)
         filas.append(_fila(m, estado, regla, encontrados or []))
 
     # 2a pasada: un solo CFDI de pago que cubre varias transferencias del mismo RFC
@@ -185,8 +186,8 @@ def pagos_sin_factura(filas, pendientes, cfdis, rfc):
         if sueltos:
             g['accion'] = f"Hay {len(sueltos)} CFDI suyo(s) sin cruzar por ${sum(e['importe'] for e in sueltos):,}: revisar si son estos pagos"
         elif del_prov:
-            g['accion'] = 'Hay facturas suyas en el mes pero ninguna cuadra: pedir complemento de pago o factura de este pago'
+            g['accion'] = 'Hay facturas suyas en el mes pero ninguna cuadra: pedir complemento de pago o factura de este pago; si no llega, va a no deducibles'
         else:
-            g['accion'] = 'Ningún CFDI suyo en el mes: pedir factura'
+            g['accion'] = 'Ningún CFDI suyo en el mes: pedir factura; si no llega, va a no deducibles'
         g['fechas'] = ', '.join(sorted(set(g['fechas'])))
     return sorted(grupos.values(), key=lambda g: -g['total'])

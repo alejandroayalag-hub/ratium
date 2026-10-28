@@ -13,6 +13,11 @@
    - **Prioridad: lo que salió del banco y no tiene factura.**
    - El cliente manda el estado de cuenta en PDF hacia el **día 5**; conciliar Super Pack le toma **5 días**.
 
+   - Panamericano (SPEI desde Santander) = recolección del efectivo de ventas ✅
+   - Ventas de mostrador: la mayoría va a factura (globales a XAXX010101000). Pendiente: cuadre ventas depositadas vs facturado, cuando tengamos TODAS las emitidas (faltan 178 por el límite de 500).
+   - Pagos sin factura → no deducibles ✅
+   - Super Pack tiene cuenta **Scotiabank para nómina** → pedir ese estado de cuenta.
+
 Consecuencia: CONTPAQi ya resuelve la descarga y las pólizas de provisión. El valor de RATIUM está en la conciliación banco ↔ CFDI.
 
 Se van agregando conforme surgen dudas técnicas. Marcar con ✅ y anotar la respuesta.

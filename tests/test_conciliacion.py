@@ -102,6 +102,8 @@ class TestConciliar(unittest.TestCase):
                 self.m('2026-09-09', 'SAT | REF:04266 CIE:0844985', cargo='12', codigo='P14')]
         filas, pend = conciliacion.conciliar(movs, cfdis, CLIENTE)
         self.assertEqual(filas[-1]['regla'], 'Pago de impuestos SAT')
+        panam = self.m('2026-09-02', 'SPEI RECIBIDOSANTANDER | Ref. 1 | 0001 | SERVICIO PAN AMERICANO DE PROTECCION SAD', abono='352500', codigo='T20')
+        self.assertEqual(conciliacion.conciliar([panam], [], CLIENTE)[0][0]['regla'], 'Efectivo recolectado (Panamericano)')
         g = conciliacion.pagos_sin_factura(filas, pend, cfdis, CLIENTE)
         self.assertEqual([(x['nombre'], x['pagos'], x['total']) for x in g],
                          [('JABON LA CORONA', 2, D('1000')), ('PAPELERIA CISNE SA', 1, D('99')), ('SPEI ENVIADO NUBANK', 1, D('70'))])
